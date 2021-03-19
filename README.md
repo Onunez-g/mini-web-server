@@ -1,5 +1,4 @@
-# Go-chat
-
+# Mini-web-server
 A simple mini web server in golang, using mux package for routing.
 
 ## Getting Started
