@@ -15,7 +15,7 @@ type message struct {
 	Message string `json:"message"`
 }
 
-var messages []message = []message{
+var messages = []message{
 	{
 		Id:      1,
 		Message: "Hola",
@@ -57,18 +57,15 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 func createMessage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var msg message
-	err := json.NewDecoder(r.Body).Decode(&msg)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Fatal(fmt.Errorf("An error has ocurred: %s", err.Error()))
-		log.Fatal(w.Write([]byte("Wrong format")))
+		w.Write([]byte("Wrong format"))
 		return
 	}
 	for _, v := range messages {
 		if v.Id == msg.Id {
-			w.WriteHeader(http.StatusBadRequest)
-			log.Fatal(fmt.Errorf("An error has ocurred: %s", err.Error()))
-			log.Fatal(w.Write([]byte("Existing Id")))
+			w.WriteHeader(http.StatusConflict)
+			w.Write([]byte("Existing Id"))
 			return
 		}
 	}
@@ -79,6 +76,7 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(fmt.Errorf("An error has ocurred: %s", err.Error()))
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	if _, err := w.Write([]byte(response)); err != nil {
 		log.Fatal(err.Error())
 	}
@@ -89,11 +87,10 @@ func updateMessage(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var msg message = message{}
 	var updatedMsg message
-	err := json.NewDecoder(r.Body).Decode(&updatedMsg)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&updatedMsg); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Fatal(fmt.Errorf("An error has ocurred: %s", err.Error()))
-		log.Fatal(w.Write([]byte("Wrong format")))
+		w.Write([]byte("Wrong format"))
 		return
 	}
 
@@ -105,7 +102,7 @@ func updateMessage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if msg.Id == 0 {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		log.Println(w.Write([]byte("Message not Found")))
 		return
 	}
@@ -133,7 +130,7 @@ func deleteMessage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if msg.Id == 0 {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		log.Println(w.Write([]byte("Message not Found")))
 		return
 	}
